@@ -11,7 +11,7 @@
     "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
     "logs:prod": "fly logs",
-    "path_check": "echo $PATH"
+    "lint": "eslint ."
   },
   "author": "jkamppur@iki.fi",
   "license": "ISC",
@@ -23,7 +23,11 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "@flydotio/dockerfile": "^0.5.9",
+    "@stylistic/eslint-plugin-js": "^2.12.1",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
     "nodemon": "^3.1.7"
   }
 }
