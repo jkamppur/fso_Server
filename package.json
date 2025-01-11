@@ -8,9 +8,10 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": "rm -rf dist && cd ../harj_repo/osa2/puhelinluettelo/ && npm run build && cp -r dist ../../../server_repo/",
-    "deploy": "/home/jkamppur/.fly/bin/flyctl deploy",
+    "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
-    "logs:prod": "/home/jkamppur/.fly/bin/flyctl logs"
+    "logs:prod": "fly logs",
+    "path_check": "echo $PATH"
   },
   "author": "jkamppur@iki.fi",
   "license": "ISC",

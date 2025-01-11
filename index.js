@@ -1,17 +1,17 @@
 require('dotenv').config()  // read variables from .env
 
 const express = require('express')
-const app = express()
-const morgan = require('morgan')
-const cors = require('cors')
-const Person = require('./models/person')
+const app = express()  // create express instanse
+const morgan = require('morgan')  // logging middleware
+const cors = require('cors') // Enable Cross-origin resource sharing 
+const Person = require('./models/person')  // mongoose specific code
 
 app.use(express.json())  // json parser
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))  // Settings for morgan logging
 app.use(cors())
 app.use(express.static('dist'))  // serve frontend from directory static
 
-morgan.token('body', req => {  // Custom Logging for server
+morgan.token('body', req => {  // Custom Logging for POST message
     if (req.method == "POST")
         result = JSON.stringify(req.body, ['name', 'number']);
     else
@@ -38,27 +38,26 @@ app.get('/api/persons', (request, response) => {
   })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    Person.findById({id}).then(person => {
-      response.json(person)
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id).then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
   })
+  .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(person => person.id !== id)
-
-  response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
-/*
-const generateId = () => {
-    return Math.floor(Math.random()*10000)
-}
-*/    
- 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     console.log("post called")
     const person = request.body
 
@@ -69,18 +68,10 @@ app.post('/api/persons', (request, response) => {
     }
 
     if (!person.number) {
-        return response.status(400).json({ 
-          error: 'number missing' 
-        })
-      }
-  
-    /*
-    if (persons.filter(person2 => person2.name === person.name).length > 0) {
       return response.status(400).json({ 
-        error: 'name must be unique' 
+        error: 'number missing' 
       })
     }
-    */
 
     const newPerson = new Person({
       name: person.name,
@@ -90,8 +81,39 @@ app.post('/api/persons', (request, response) => {
     newPerson.save().then(savedPerson => {
       response.json(savedPerson)
     })
+})
 
-  })
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const person = {
+    name: body.content,
+    number: body.number,
+  }
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+  
+
+// Error handler middelware:
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  console.error(error.name)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+
+// tämä tulee kaikkien muiden middlewarejen ja routejen rekisteröinnin jälkeen!
+app.use(errorHandler)
+
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
